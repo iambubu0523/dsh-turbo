@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "DSH Turbo Mode",
+    "description": "Asks the provider for its real priority service tier where one exists, measures whether it is genuinely faster, and never lowers reasoning effort or output length.",
+    "detail": "docs/DETAIL.md"
+  }
+}

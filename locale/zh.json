@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "DSH 极速模式",
+    "description": "在服务商确实提供优先档位时请求该档位，实测是否真的更快，并且从不降低推理强度或输出长度。",
+    "detail": "docs/DETAIL.md"
+  }
+}

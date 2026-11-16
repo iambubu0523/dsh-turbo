@@ -1,0 +1,9 @@
+# dsh-turbo-mode: upstream priority service tier + honest latency reporting.
+# `config.defaultSpeed` seeds every session; a per-session choice made in the
+# composer toggle (or by the agent's turbo_mode tool) overrides it.
+- insert:
+    - id: turbo
+      name: dsh-turbo-mode
+      config:
+        defaultSpeed: standard
+        providers: {}

@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: ['20.x', '22.x', '24.x']
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Unit tests
+        run: node --test "test/**/*.test.js"
+
+      - name: Package sanity
+        run: |
+          node --input-type=module -e "
+            import { readFileSync, existsSync } from 'node:fs'
+            import { fileURLToPath } from 'node:url'
+            import { dirname, join } from 'node:path'
+
+            const root = process.cwd()
+            const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'))
+
+            // Every published path must exist: a missing export breaks the
+            // Harness plugin loader at activation time, not at install time.
+            for (const [name, target] of Object.entries(pkg.exports)) {
+              const path = join(root, String(target).replace(/^\.\//, ''))
+              if (name.includes('*')) continue
+              if (!existsSync(path)) throw new Error('missing export ' + name + ' -> ' + target)
+            }
+
+            for (const file of ['index.js', 'client.js', 'cordis.patch.yml', 'icon.svg', 'locale/en.json', 'locale/zh.json']) {
+              if (!existsSync(join(root, file))) throw new Error('missing file ' + file)
+            }
+
+            if (!pkg.dsh?.bundle?.patch) throw new Error('package.json must declare dsh.bundle.patch')
+            if (!pkg.dsh?.client?.platform) throw new Error('package.json must declare dsh.client.platform')
+            if (!pkg.engines?.dsh) throw new Error('package.json should declare a DSH engine range')
+
+            // The plugin format is plain ESM with zero runtime dependencies.
+            const deps = Object.keys(pkg.dependencies ?? {})
+            if (deps.length > 0) throw new Error('unexpected runtime dependencies: ' + deps.join(', '))
+
+            console.log('package sanity OK')
+          "
+
+  host-entry:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+
+      - name: Host entry exports apply() and nothing executable at import time
+        run: |
+          node --input-type=module -e "
+            const mod = await import('./index.js')
+            if (typeof mod.apply !== 'function') throw new Error('host entry must export apply()')
+            if (typeof mod.name !== 'string') throw new Error('host entry must export name')
+            if (!Array.isArray(mod.inject)) throw new Error('host entry must export inject')
+            console.log('host entry OK:', mod.name, mod.inject.join(','))
+          "
+
+      - name: Client bundle is a ModuleLoader factory using only the module table
+        run: |
+          node --input-type=module -e "
+            import { readFileSync } from 'node:fs'
+            const source = readFileSync('client.js', 'utf8')
+            if (!source.includes('__ModuleLoader__')) throw new Error('client.js must register through __ModuleLoader__.load')
+            const imports = [...source.matchAll(/^\s*import\s[^;]*from\s+'([^']+)'/gm)].map((m) => m[1])
+            if (imports.length > 0) throw new Error('client.js must not have top-level imports: ' + imports.join(', '))
+            console.log('client bundle OK')
+          "
