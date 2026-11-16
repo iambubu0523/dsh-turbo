@@ -10,7 +10,7 @@
 | 系统 | Windows（本机） |
 | Node | v24.21.0（DSH 内置运行时） |
 | 模型 | `DeepSeek-V4.1-Flash-1017` / `DeepSeek-V4-Pro` |
-| Provider | `relay`（企业内部 OpenAI 兼容中转，host 隐去） |
+| Provider | `relay`（作者自己的 OpenAI 兼容中转，host 隐去） |
 | 实际链路 | 本机 HTTP 代理转发：`127.0.0.1:<port>` → 上游 `https://relay.example.com/v1/chat/completions` |
 | 推理强度 | 未改动（沿用会话默认） |
 
@@ -25,7 +25,7 @@
 - 判定：fast 中位数快 ≥ **15%** 且多数轮次更快 → `accepted-faster`；否则 `accepted-no-effect`
 - 每次调用都校验参数是否真的上了线（`paramSent`），避免"测了个空"——本项目早期就踩过这个坑（hook 被别的集成覆盖，参数根本没发出去，却得出"无效"结论）
 
-## 结果：企业内部中转
+## 结果：作者自己的中转
 
 `host: relay.example.com`，`model: DeepSeek-V4.1-Flash-1017`。下表全部为**参数确认已上线**的轮次。
 

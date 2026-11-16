@@ -28,7 +28,7 @@ It cannot make a provider without a priority lane become faster. Measured on the
 
 | Endpoint | Model | Result |
 | --- | --- | --- |
-| An internal OpenAI-compatible relay (host withheld) | `DeepSeek-V4.1-Flash-1017` | parameter accepted, **no reproducible speed-up** (8 probes: +5.9% / +18.5% / +1.3% / +5.2% / +23.6% / −7.8% / −0.1% / +9.7%, median +5.5%) |
+| The author's own OpenAI-compatible relay (host withheld) | `DeepSeek-V4.1-Flash-1017` | parameter accepted, **no reproducible speed-up** (8 probes: +5.9% / +18.5% / +1.3% / +5.2% / +23.6% / −7.8% / −0.1% / +9.7%, median +5.5%) |
 | Same relay | `DeepSeek-V4-Pro` | 3 probes disagree (+15.4% / −236.9% / +9.3%); aggregation rules refuse to decide, Fast stays off |
 | OpenAI (`api.openai.com`) | — | `service_tier=priority` is documented, **not tested here** (no key in this profile) |
 | DeepSeek (`api.deepseek.com`) | — | vendor publishes no priority tier, so nothing is sent |

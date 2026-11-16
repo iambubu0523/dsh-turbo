@@ -23,7 +23,7 @@ First release. Package name is `dsh-turbo-mode` (the npm name `dsh-turbo` belong
 
 ### Measured
 
-- An internal OpenAI-compatible relay (host withheld): two models tested. `DeepSeek-V4.1-Flash-1017` — parameter **accepted but no reproducible effect** (8 probes, median +5.5%). `DeepSeek-V4-Pro` — 3 probes disagree (+15.4% / −236.9% / +9.3%), latency variance too high, aggregation rules refuse to decide. Fast stays off for both.
+- The author's own OpenAI-compatible relay (host withheld): two models tested. `DeepSeek-V4.1-Flash-1017` — parameter **accepted but no reproducible effect** (8 probes, median +5.5%). `DeepSeek-V4-Pro` — 3 probes disagree (+15.4% / −236.9% / +9.3%), latency variance too high, aggregation rules refuse to decide. Fast stays off for both.
 - OpenAI `service_tier=priority` is documented but **was not tested** in this release (no key in the author's profile), so no speed-up is claimed for it.
 
 ### Not included (on purpose)
