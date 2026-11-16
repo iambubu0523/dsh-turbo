@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/assets/hero.png" alt="DSH Turbo Mode — Codex-style Fast Mode" width="100%" />
+<img src="docs/assets/hero.jpg" alt="DSH Turbo Mode — Codex-style Fast Mode" width="100%" />
 
 **Codex-style Fast Mode for DeepSeek Harness — a turbo for the little whale.**
 Same model, same reasoning effort — the request just gets to queue first.
@@ -224,6 +224,10 @@ Covers capability precedence, state persistence and corrupt-state recovery, metr
 - If a relay "accepts but ignores" the tier parameter, this plugin reports it as **no effect**, not as a win.
 
 ## Credits
+
+<p><img src="docs/assets/mascot.png" alt="whale girl" width="132" /></p>
+
+The whale-girl look is a community creation. This project's avatar and banner were generated from the public character description shared by the [deepseek-whale-girl](https://github.com/TreapGoGo/deepseek-whale-girl) community (their prompt text is licensed CC BY-SA 4.0). No image asset from that repository is copied here.
 
 - [dsh-relay-fast](https://github.com/Rock-ql/dsh-relay-fast) — the original `service_tier` injection approach
 - [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) — the Cordis plugin framework

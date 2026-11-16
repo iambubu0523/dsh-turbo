@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/assets/hero.png" alt="DSH 极速模式 — Codex 风格的 Fast Mode" width="100%" />
+<img src="docs/assets/hero.jpg" alt="DSH 极速模式 — Codex 风格的 Fast Mode" width="100%" />
 
 **Codex 风格的 Fast Mode，给小鲸鱼装上涡轮。**
 同样的模型、同样的推理强度，只是请求优先排队。
@@ -228,6 +228,10 @@ node --test "test/**/*.test.js"     # 46 个用例
 - 中转方若"接受但不实现" `service_tier`，本插件会如实判定为**无效**。
 
 ## 致谢
+
+<p><img src="docs/assets/mascot.png" alt="鲸鱼娘" width="132" /></p>
+
+角色形象「鲸鱼娘」由社区共创，本项目的头像与头图按 [deepseek-whale-girl](https://github.com/TreapGoGo/deepseek-whale-girl) 社区的公开设定描述生成；该社群的提示词文本按 CC BY-SA 4.0 共享，此处仅作参考致谢，不复制其图片素材。
 
 - [dsh-relay-fast](https://github.com/Rock-ql/dsh-relay-fast) —— 早期 `service_tier` 注入思路
 - [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) —— Cordis 插件框架
