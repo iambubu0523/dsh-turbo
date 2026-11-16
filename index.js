@@ -23,13 +23,13 @@
 import { join } from 'node:path'
 import { AsyncLocalStorage } from 'node:async_hooks'
 
-import { SPEEDS, hostOf, injectable, resolveCapability, verdictKey } from './lib/capability.js'
+import { SPEEDS, aggregateVerdicts, hostOf, injectable, resolveCapability, verdictKey } from './lib/capability.js'
 import { createMetrics } from './lib/metrics.js'
 import { createHandler, PREFIX } from './lib/routes.js'
 import { createState, isSpeed } from './lib/state.js'
 import { createStore, resolveDshHome } from './lib/store.js'
 import { createTransport } from './lib/tier.js'
-import { runProbe } from './lib/probe.js'
+import { runBench, runProbe } from './lib/probe.js'
 
 /** Cordis plugin name (the id in `cordis.patch.yml` is `turbo`). */
 export const name = 'turbo'
@@ -352,15 +352,81 @@ export async function apply(ctx, rawConfig) {
     result.provider = provider
     result.at = Date.now()
 
-    verdicts[verdictKey(result.host, model)] = {
-      verdict: result.verdict,
+    // Keep a short history per endpoint+model and decide on the aggregate, so
+    // one fast round cannot switch Fast on for the whole profile.
+    const key = verdictKey(result.host, model)
+    const previous = Array.isArray(verdicts[key]?.history) ? verdicts[key].history : []
+    const history = [
+      ...previous,
+      {
+        verdict: result.verdict,
+        deltaPct: result.deltaPct,
+        samples: result.samples,
+        rounds: result.rounds,
+        at: result.at,
+      },
+    ].slice(-5)
+    const aggregated = aggregateVerdicts(history)
+    verdicts[key] = {
+      verdict: aggregated.verdict,
+      support: aggregated.support,
+      note: aggregated.note,
       deltaPct: result.deltaPct,
       samples: result.samples,
+      rounds: result.rounds,
+      decided: aggregated.decided,
       at: result.at,
+      history,
     }
     await store.write('capability.json', { version: 1, verdicts })
 
     return { probe: result, state: describeSession(resolved) }
+  }
+
+  /**
+   * Compare model SKUs on one endpoint. On relays that sell speed as a separate
+   * model name (a `*-highspeed` sibling) this is the only honest way to tell
+   * which name is actually quicker on the same prompt.
+   *
+   * @param {object} input
+   * @param {string} [input.sessionId]
+   * @param {string} [input.provider]
+   * @param {string[]} [input.models]
+   * @param {number} [input.rounds]
+   */
+  async function bench({ sessionId, provider, models, rounds }) {
+    const resolved = resolveSession(sessionId)
+    const last = typeof resolved === 'string' ? lastCall.get(resolved) : undefined
+    const endpoint = last ?? config.probeTarget
+    const chosenProvider = typeof provider === 'string' && provider !== '' ? provider : endpoint?.provider
+    if (typeof chosenProvider !== 'string' || chosenProvider === '') {
+      throw new Error('Send one message in this session first, or pass an explicit provider.')
+    }
+
+    const wanted = Array.isArray(models) ? models.filter((model) => typeof model === 'string' && model !== '') : []
+    const currentModel = typeof endpoint?.model === 'string' ? endpoint.model : undefined
+    const list = wanted.length > 0 ? wanted.slice(0, 12) : currentModel === undefined ? [] : [currentModel]
+    if (list.length === 0) {
+      throw new Error('Name at least one model id to benchmark.')
+    }
+
+    let effort
+    try {
+      const info = typeof llm.resolveModelInfo === 'function' ? llm.resolveModelInfo(chosenProvider, currentModel) : undefined
+      effort = info?.reasoning?.defaultEffort
+    } catch {
+      effort = undefined
+    }
+
+    const result = await runBench({
+      llm,
+      provider: chosenProvider,
+      models: list,
+      effort,
+      transport,
+      rounds: rounds ?? 1,
+    })
+    return { bench: result, state: describeSession(resolved) }
   }
 
   const handle = createHandler({
@@ -374,6 +440,7 @@ export async function apply(ctx, rawConfig) {
     }),
     resetMetrics: () => metrics.clear(),
     probe: async (input) => probe(input),
+    bench: async (input) => bench(input),
   })
 
   if (ctx.webServer !== undefined && typeof ctx.webServer.register === 'function') {
@@ -400,8 +467,9 @@ export async function apply(ctx, rawConfig) {
             properties: {
               action: {
                 type: 'string',
-                enum: ['status', 'set', 'metrics', 'probe'],
-                description: 'status reads the tier and latency summary; set changes it; probe measures the endpoint.',
+                enum: ['status', 'set', 'metrics', 'probe', 'bench'],
+                description:
+                  'status reads the tier and latency summary; set changes it; probe measures whether a priority tier really helps; bench compares model ids on the same endpoint.',
               },
               speed: {
                 type: 'string',
@@ -409,6 +477,23 @@ export async function apply(ctx, rawConfig) {
                 description: 'Target speed for action "set".',
               },
               sessionId: { type: 'string', description: 'Session to act on; omit for the profile default.' },
+              samples: {
+                type: 'integer',
+                description: 'Interleaved rounds for action "probe" (3..5). Fewer than 3 never produces a verdict.',
+              },
+              provider: {
+                type: 'string',
+                description: 'Provider id for action "bench"; defaults to the current session\'s provider.',
+              },
+              models: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'Model ids to compare for action "bench" (up to 12).',
+              },
+              rounds: {
+                type: 'integer',
+                description: 'Passes over the model list for action "bench" (1..3).',
+              },
             },
             required: ['action'],
             additionalProperties: false,
@@ -422,7 +507,16 @@ export async function apply(ctx, rawConfig) {
             const sessionId = args !== null && typeof args === 'object' && typeof args.sessionId === 'string' ? args.sessionId : undefined
             if (action === 'set') return { ok: true, ...(await setSpeed(sessionId, args.speed)) }
             if (action === 'metrics') return { ok: true, summary: metrics.summary({ limit: 200 }) }
-            if (action === 'probe') return { ok: true, ...(await probe({ sessionId })) }
+            if (action === 'probe') {
+              const samples = args !== null && typeof args === 'object' && typeof args.samples === 'number' ? args.samples : undefined
+              return { ok: true, ...(await probe({ sessionId, samples })) }
+            }
+            if (action === 'bench') {
+              const provider = args !== null && typeof args === 'object' && typeof args.provider === 'string' ? args.provider : undefined
+              const models = args !== null && typeof args === 'object' && Array.isArray(args.models) ? args.models : undefined
+              const rounds = args !== null && typeof args === 'object' && typeof args.rounds === 'number' ? args.rounds : undefined
+              return { ok: true, ...(await bench({ sessionId, provider, models, rounds })) }
+            }
             return { ok: true, ...describeSession(sessionId) }
           },
         },
@@ -438,5 +532,5 @@ export async function apply(ctx, rawConfig) {
   // activation with "Invalid effect") and forbids ad-hoc context properties
   // ("cannot set property ... without provide"), so the handle is parked in a
   // module-level map for tests and for anything else that needs it.
-  handles.set(ctx, { describe: describeSession, setSpeed, probe, metrics, transport, state })
+  handles.set(ctx, { describe: describeSession, setSpeed, probe, bench, metrics, transport, state })
 }

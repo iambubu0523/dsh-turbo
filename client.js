@@ -24,6 +24,7 @@ window.__ModuleLoader__.load({
         fast: 'Fast',
         fastPending: 'Fast asked…',
         unsupported: 'This endpoint has no documented priority tier. Fast stays off.',
+        noGain: 'Measured here: no reproducible speed-up, so Fast stays off.',
         unclassified: 'Send one message first: the plugin cannot classify this endpoint yet.',
         unreachable: 'Turbo host is not reachable.',
         noMetrics: 'no samples yet',
@@ -39,6 +40,7 @@ window.__ModuleLoader__.load({
         fast: '极速',
         fastPending: '已请求极速…',
         unsupported: '该接入点没有官方优先档位，Fast 未生效。',
+        noGain: '实测无可复现加速，Fast 未生效。',
         unclassified: '先发一条消息：插件还无法判定这个接入点。',
         unreachable: '连不上 Turbo 宿主端。',
         noMetrics: '暂无样本',
@@ -240,7 +242,13 @@ window.__ModuleLoader__.load({
 
       // Fast was asked for but the endpoint cannot honour it: say so, plainly.
       const blocked = speed === 'fast' && !effective
-      const note = blocked ? (support === 'unknown' ? text.unclassified : text.unsupported) : null
+      const note = blocked
+        ? support === 'unknown'
+          ? text.unclassified
+          : support === 'unsupported'
+            ? text.unsupported
+            : text.noGain
+        : null
 
       const tier = state.metrics?.byTier?.[speed]
       const samples = Number(tier?.requests ?? 0)

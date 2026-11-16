@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 
-import { runProbe, MAX_SAMPLES, MIN_WIN_PCT, PROBE_PARAM } from '../lib/probe.js'
+import { runProbe, MAX_SAMPLES, MIN_WIN_PCT, MIN_ROUNDS, PROBE_PARAM } from '../lib/probe.js'
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms))
@@ -55,6 +55,7 @@ test('constants describe a conservative probe', () => {
   assert.deepEqual(PROBE_PARAM, { service_tier: 'priority' })
   assert.equal(MAX_SAMPLES, 5)
   assert.ok(MIN_WIN_PCT >= 10)
+  assert.ok(MIN_ROUNDS >= 3, 'a verdict needs several interleaved rounds')
 })
 
 test('a clear win is reported as faster with the measured delta', async () => {
@@ -64,11 +65,11 @@ test('a clear win is reported as faster with the measured delta', async () => {
     provider: 'test',
     model: 'test-model',
     transport,
-    samples: 2,
+    samples: 3,
   })
   assert.equal(result.verdict, 'accepted-faster')
   assert.ok(result.deltaPct > 50, `delta was ${result.deltaPct}`)
-  assert.equal(result.samples, 4)
+  assert.equal(result.samples, 6)
   assert.match(result.detail, /sooner/)
 })
 
@@ -79,7 +80,7 @@ test('an indistinguishable result is reported as no effect, not as a win', async
     provider: 'test',
     model: 'test-model',
     transport,
-    samples: 2,
+    samples: 3,
   })
   assert.equal(result.verdict, 'accepted-no-effect')
   assert.match(result.detail, /noise floor/)
@@ -133,4 +134,18 @@ test('the sample count is clamped to the documented maximum', async () => {
     samples: 99,
   })
   assert.equal(result.samples, MAX_SAMPLES * 2)
+})
+
+test('a single round refuses to decide', async () => {
+  const transport = stubTransport()
+  const result = await runProbe({
+    llm: fakeLlm(transport, { standardMs: 900, fastMs: 400 }),
+    provider: 'test',
+    model: 'test-model',
+    transport,
+    samples: 1,
+  })
+  assert.equal(result.verdict, 'inconclusive')
+  assert.equal(result.rounds, 1)
+  assert.match(result.detail, /needs at least 3/)
 })

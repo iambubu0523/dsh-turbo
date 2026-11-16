@@ -18,7 +18,8 @@ It cannot make a provider without a priority lane become faster. Measured on the
 
 | Endpoint | Model | Result |
 | --- | --- | --- |
-| An internal OpenAI-compatible relay (host withheld) | `DeepSeek-V4.1-Flash-1017` | parameter accepted, **no reproducible speed-up** (four 3-round probes: +18.5% / +1.3% / +5.2% / +5.9%, median +5.5%, i.e. noise) |
+| An internal OpenAI-compatible relay (host withheld) | `DeepSeek-V4.1-Flash-1017` | parameter accepted, **no reproducible speed-up** (8 probes: +5.9% / +18.5% / +1.3% / +5.2% / +23.6% / −7.8% / −0.1% / +9.7%, median +5.5%) |
+| Same relay | `DeepSeek-V4-Pro` | 3 probes disagree (+15.4% / −236.9% / +9.3%); aggregation rules refuse to decide, Fast stays off |
 | OpenAI (`api.openai.com`) | — | `service_tier=priority` is documented, **not tested here** (no key in this profile) |
 | DeepSeek (`api.deepseek.com`) | — | vendor publishes no priority tier, so nothing is sent |
 
@@ -30,9 +31,9 @@ So this is not a magic "make it faster" button. It is: *if the provider has a fa
 
 A small switch appears in the composer:
 
-```
-Turbo   [ Standard ] [ Fast ]   first token 1204ms · 198 tok/s
-```
+![Turbo switch, standard mode](docs/screenshots/toggle.png)
+
+![Turbo switch, fast mode — honest when ineffective](docs/screenshots/toggle-fast.png)
 
 - **Standard** — the request goes out byte-for-byte unchanged.
 - **Fast** — adds exactly one documented field, and only on an endpoint whose priority tier is confirmed. Model, reasoning effort, prompt, tools, temperature, max tokens and every verification step stay the same. If the endpoint is unsupported, unmeasured, or measured-without-effect, Fast stays off and the reason is printed next to it.
@@ -69,7 +70,9 @@ Disable or remove the bundle in the Plugins panel. The HTTP routes, the fetch ho
 
 - **Click the switch** — applies to the session on screen; with no session selected it changes the profile default that new sessions inherit.
 - **Ask the agent** — "turn Fast on" makes it call the `turbo_mode` tool (`action: status | set | metrics | probe`).
-- **Probe a relay** — `turbo_mode` with `action: "probe"`. Same model, same reasoning effort, one tiny prompt, standard and fast **interleaved** N times each, comparing time-to-first-token. Only a ≥15% median win with a majority of rounds faster marks the endpoint as usable.
+- **Probe a relay** — `turbo_mode` with `action: "probe"`. Same model, same reasoning effort, one tiny prompt, standard and fast **interleaved** N times each, comparing time-to-first-token.
+  - One round never decides: `samples < 3` always answers `inconclusive` (identical requests on a shared path swing by 20%; this project measured one +23.6% false positive).
+  - Verdicts are aggregated over history: the last five probes per endpoint+model are kept, the last three decisive ones are considered, and at least **two** of them must show a ≥15% median win (with a majority of rounds faster) before an endpoint counts as verified. All flat → no effect. Split → unknown, and Fast stays off until the win repeats.
 - **Read the numbers** — `GET /turbo/state`, `GET /turbo/metrics` (loopback only).
 
 ### Supported endpoints
@@ -129,6 +132,7 @@ Harness loop → llm/stream (measurement only, request untouched)
 
 - Session ownership travels through `AsyncLocalStorage`, so concurrent sessions never leak into each other's tier.
 - The fetch hook re-checks every 2 s and re-wraps if another integration (a local relay proxy, for instance) replaced `globalThis.fetch` — otherwise Fast would silently downgrade to Standard. That was a real bug found in this project, and it is covered by a unit test.
+- `transport.armed` only says our hook is the outermost fetch. A proxy wrapped *above* us that still delegates down keeps Fast working, so the real evidence is `transport.delivering` (the hook was reached within the last 15 s) plus the `transport.injected` counter.
 
 ### What the numbers mean
 
@@ -154,7 +158,7 @@ All of them come from real HTTP exchanges; none are estimated:
 Zero dependencies, zero build, plain ESM:
 
 ```bash
-node --test "test/**/*.test.js"     # 41 cases
+node --test "test/**/*.test.js"     # 46 cases
 ```
 
 Covers capability precedence, state persistence and corrupt-state recovery, metric aggregation, the fetch hook (inject / do-not-inject / 429 hold / self-healing) and probe verdicts (including detection of "the parameter never reached the wire").

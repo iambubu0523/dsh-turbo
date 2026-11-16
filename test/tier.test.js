@@ -209,6 +209,32 @@ test('a 429 holds the next request for Retry-After and never retries by itself',
   }
 })
 
+test('a shim wrapped from above still reports delivery, not just arming', async () => {
+  const original = globalThis.fetch
+  const first = fakeFetch()
+  globalThis.fetch = first.impl
+  const transport = createTransport({ capabilityFor: () => DOCUMENTED })
+  transport.acquire()
+  try {
+    await transport.runIn({ speed: 'fast', record: {} }, () =>
+      globalThis.fetch(URL_OPENAI, { method: 'POST', body: JSON.stringify({ model: 'gpt-4.1', messages: [] }) }),
+    )
+
+    // A proxy that wraps us but delegates back down: the request still reaches
+    // the shim, so Fast is still delivered even though we are no longer the
+    // outermost fetch.
+    const inner = globalThis.fetch
+    globalThis.fetch = (input, init) => inner(input, init)
+
+    const status = transport.status()
+    assert.equal(status.armed, false, 'we are no longer the outermost fetch')
+    assert.equal(status.delivering, true, 'but requests still reach the shim')
+  } finally {
+    transport.release()
+    globalThis.fetch = original
+  }
+})
+
 test('the shim re-arms when another integration replaces fetch', async () => {
   const original = globalThis.fetch
   const first = fakeFetch()

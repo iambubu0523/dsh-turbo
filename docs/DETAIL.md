@@ -29,9 +29,21 @@ body, and only when the plugin can prove the endpoint documents that field:
 
 Nothing is injected on an unclassified endpoint: "unknown" is not treated as
 "probably fine". Run `turbo_mode` with `action: "probe"` to measure a relay:
-the plugin alternates plain and priority requests at the same effort, and only
-marks the endpoint injectable if the priority arm wins by at least 15% with a
-majority of rounds faster.
+the plugin alternates plain and priority requests at the same effort and
+compares time-to-first-token.
+
+Two rules keep noise out of the verdict:
+
+1. **At least 3 interleaved rounds.** Fewer answers `inconclusive`; one lucky
+   round is not evidence (this project measured a +23.6% single-round "win"
+   that did not repeat).
+2. **Aggregation over history.** The last five probes per endpoint+model are
+   kept; of the last three decisive ones, at least **two** must show a ≥15%
+   median win with a majority of rounds faster before the endpoint counts as
+   verified. All flat → `accepted-no-effect`; split → `unknown`, and Fast stays
+   off until the win repeats. Entries written before aggregation existed are
+   not trusted; a refusal (HTTP 400/422) is a hard signal and needs no
+   statistics.
 
 ## Where the setting lives
 
@@ -77,7 +89,7 @@ hand.
         defaultSpeed: standard   # standard | fast, seeds every session
         holdMs: 15000            # longest 429 hold
         metricsCapacity: 200     # samples kept in memory
-        probeSamples: 3          # rounds per A/B probe (2..5)
+        probeSamples: 3          # rounds per A/B probe (3..5; fewer never decides)
         dshHome: null            # override the state directory
         providers: {}            # per-endpoint capability overrides
 ```

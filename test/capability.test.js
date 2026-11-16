@@ -4,6 +4,7 @@ import assert from 'node:assert/strict'
 import {
   SPEEDS,
   SUPPORT_LEVELS,
+  aggregateVerdicts,
   builtinRuleFor,
   formatDelta,
   hostOf,
@@ -74,7 +75,7 @@ test('resolveCapability precedence: override, vendor, probe, unknown', () => {
     url: RELAY,
     model: 'DeepSeek-V4.1-Flash-1017',
     verdicts: {
-      [verdictKey('relay.example.com', 'DeepSeek-V4.1-Flash-1017')]: { verdict: 'accepted-faster', deltaPct: 22.4 },
+      [verdictKey('relay.example.com', 'DeepSeek-V4.1-Flash-1017')]: { verdict: 'accepted-faster', support: 'verified', deltaPct: 22.4 },
     },
   })
   assert.equal(measured.source, 'probe')
@@ -92,7 +93,7 @@ test('an endpoint the probe measured as unaffected is never injected into', () =
     url: RELAY,
     model: 'DeepSeek-V4.1-Flash-1017',
     verdicts: {
-      [verdictKey('relay.example.com', 'DeepSeek-V4.1-Flash-1017')]: { verdict: 'accepted-no-effect', deltaPct: 5.2 },
+      [verdictKey('relay.example.com', 'DeepSeek-V4.1-Flash-1017')]: { verdict: 'accepted-no-effect', support: 'accepted-no-effect', deltaPct: 5.2 },
     },
   })
   assert.equal(capability.support, 'accepted-no-effect')
@@ -120,4 +121,55 @@ test('verdictKey and formatDelta shape the stored measurement', () => {
   assert.equal(verdictKey('relay.example.com', 'm'), 'relay.example.com|m')
   assert.equal(formatDelta(18.52), '+18.5%')
   assert.equal(formatDelta(-3), '-3.0%')
+})
+
+test('an unaggregated earlier verdict is not trusted', () => {
+  // Entries written before verdict aggregation carry a bare verdict. A single
+  // round must not be able to switch Fast on, so these stay unknown.
+  const legacy = resolveCapability({
+    url: RELAY,
+    model: 'DeepSeek-V4.1-Flash-1017',
+    verdicts: {
+      [verdictKey('relay.example.com', 'DeepSeek-V4.1-Flash-1017')]: { verdict: 'accepted-faster', deltaPct: 19.1 },
+    },
+  })
+  assert.equal(legacy.support, 'unknown')
+  assert.match(legacy.note, /not aggregated/)
+  assert.equal(injectable(legacy), false)
+
+  // A refusal is a hard signal and is honoured without statistics.
+  const refused = resolveCapability({
+    url: RELAY,
+    model: 'DeepSeek-V4.1-Flash-1017',
+    verdicts: {
+      [verdictKey('relay.example.com', 'DeepSeek-V4.1-Flash-1017')]: { verdict: 'rejected', deltaPct: 0 },
+    },
+  })
+  assert.equal(refused.support, 'unsupported')
+  assert.equal(injectable(refused), false)
+})
+
+test('verdicts are aggregated so one lucky round cannot promote an endpoint', () => {
+  const faster = { verdict: 'accepted-faster', deltaPct: 20 }
+  const flat = { verdict: 'accepted-no-effect', deltaPct: 2 }
+
+  const notEnough = aggregateVerdicts([faster])
+  assert.equal(notEnough.support, 'unknown')
+  assert.equal(notEnough.verdict, 'inconclusive')
+
+  const repeatable = aggregateVerdicts([faster, flat, faster])
+  assert.equal(repeatable.support, 'verified')
+  assert.equal(repeatable.verdict, 'accepted-faster')
+  assert.match(repeatable.note, /2 of the last 3/)
+
+  const noGain = aggregateVerdicts([flat, flat, faster])
+  assert.equal(noGain.support, 'unknown')
+  assert.match(noGain.note, /disagree/)
+
+  const neverFaster = aggregateVerdicts([flat, flat])
+  assert.equal(neverFaster.support, 'accepted-no-effect')
+
+  // Only the three most recent entries count, and only decisive ones.
+  const stale = aggregateVerdicts([faster, faster, flat, flat, flat])
+  assert.equal(stale.support, 'accepted-no-effect')
 })
