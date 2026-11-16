@@ -1,8 +1,18 @@
-# 🚀 DSH Turbo Mode
+<div align="center">
 
-> Codex-style Fast Mode for DeepSeek Harness — buy speed from the **provider's priority tier**, never by lowering reasoning effort, shortening output, or switching models.
+<img src="docs/assets/hero.png" alt="DSH Turbo Mode — Codex-style Fast Mode" width="100%" />
 
-[中文](./README.md) | [Measured results](./docs/BENCHMARKS.md)
+**Codex-style Fast Mode for DeepSeek Harness — a turbo for the little whale.**
+Same model, same reasoning effort — the request just gets to queue first.
+
+[![License: MIT](https://img.shields.io/badge/license-MIT-3DA639?style=flat-square)](./LICENSE)
+[![DSH](https://img.shields.io/badge/DeepSeek%20Harness-0.2.x-4D9BFF?style=flat-square)](https://github.com/deepseek-ai/deepseek-harness)
+[![deps](https://img.shields.io/badge/runtime%20deps-0-56E1E9?style=flat-square)](./package.json)
+[![tests](https://img.shields.io/badge/tests-46%20passing-4ADE80?style=flat-square)](./test)
+
+[中文](./README.md) · [Measured results](./docs/BENCHMARKS.md) · [Design notes](./docs/DETAIL.md)
+
+</div>
 
 ---
 
@@ -46,6 +56,40 @@ A small switch appears in the composer:
 - ❌ no skipped validation steps
 - ❌ no fabricated numbers, no pretending a speed-up happened
 - ❌ no key rotation, no rate-limit evasion, no infinite retries
+
+---
+
+## How it reaches the wire
+
+<div align="center">
+<img src="docs/assets/architecture.png" alt="Request path: llm/stream only measures, service_tier is injected in the fetch layer" width="100%" />
+</div>
+
+The `GenerateOptions` the Harness loop hands to an adapter is **deep-frozen**, so no plugin can rewrite it — a speed-up cannot come from mutating the request object. dsh-turbo-mode does exactly two things:
+
+1. it **listens** on `llm/stream` (measures time-to-first-token and throughput, never alters a chunk);
+2. it adds one field to the **serialized HTTP body** — and only when that endpoint is known to have a priority tier.
+
+Proxies replace `globalThis.fetch` all the time, so the hook ships with a 2-second watchdog and re-arms itself when it gets covered up.
+
+---
+
+## Measured
+
+<div align="center">
+<img src="docs/assets/benchmark.png" alt="8 interleaved A/B probes: median +5.5%, inside the noise" width="100%" />
+</div>
+
+Eight interleaved A/B probes, same model, same reasoning effort, same one-line prompt:
+
+| Metric | Value |
+| --- | --- |
+| Median gain | **+5.5%** (noise) |
+| Best single probe | +23.6% — a **one-round false positive** that became −0.1% / −7.8% / +9.7% over three rounds |
+| Did the parameter reach the wire? | Yes (`paramSent: true`, no 400/422) |
+| Verdict | parameter accepted, **no reproducible server-side speed-up** |
+
+That is precisely why the plugin probes before it switches. Full method, raw numbers and reproduction commands: [docs/BENCHMARKS.md](./docs/BENCHMARKS.md).
 
 ---
 

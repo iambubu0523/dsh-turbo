@@ -1,8 +1,18 @@
-# 🚀 DSH Turbo Mode
+<div align="center">
 
-> Codex 风格 Fast Mode for DeepSeek Harness —— 用**服务端优先通道**换速度，不降推理强度、不缩输出、不换模型。
+<img src="docs/assets/hero.png" alt="DSH 极速模式 — Codex 风格的 Fast Mode" width="100%" />
 
-[English](./README.en.md) | [实测报告](./docs/BENCHMARKS.md)
+**Codex 风格的 Fast Mode，给小鲸鱼装上涡轮。**
+同样的模型、同样的推理强度，只是请求优先排队。
+
+[![License: MIT](https://img.shields.io/badge/license-MIT-3DA639?style=flat-square)](./LICENSE)
+[![DSH](https://img.shields.io/badge/DeepSeek%20Harness-0.2.x-4D9BFF?style=flat-square)](https://github.com/deepseek-ai/deepseek-harness)
+[![deps](https://img.shields.io/badge/runtime%20deps-0-56E1E9?style=flat-square)](./package.json)
+[![tests](https://img.shields.io/badge/tests-46%20passing-4ADE80?style=flat-square)](./test)
+
+[English](./README.en.md) · [实测报告](./docs/BENCHMARKS.md) · [设计细节](./docs/DETAIL.md)
+
+</div>
 
 ---
 
@@ -48,6 +58,41 @@
 - ❌ 不减少校验步骤
 - ❌ 不伪造数据，不假装加速
 - ❌ 不轮换密钥、不绕限流、不无限重试
+
+---
+
+## 它是怎么做到的
+
+<div align="center">
+<img src="docs/assets/architecture.png" alt="请求链路：llm/stream 只测量，service_tier 在 fetch 层注入" width="100%" />
+</div>
+
+DSH 的 loop 交给适配器的 `GenerateOptions` 是**深冻结**的，插件不可能改它——所以加速不能靠改请求对象。
+dsh-turbo-mode 只做两件事：
+
+1. 在 `llm/stream` 里**旁听**（只测量首字延迟与吞吐，不改一个 chunk）；
+2. 在**序列化后的 HTTP 层**给那个 JSON 加一个字段——而且只在"这个端点确实有优先档位"时才加。
+
+代理服务器替换 `globalThis.fetch` 是常态，所以钩子带 2 秒看门狗：被覆盖了就自动重挂。
+
+---
+
+## 实测结果
+
+<div align="center">
+<img src="docs/assets/benchmark.png" alt="8 次交错 A/B 探测：中位 +5.5%，在噪声内" width="100%" />
+</div>
+
+8 次交错 A/B，同一模型、同一推理强度、同一句 prompt：
+
+| 指标 | 数值 |
+| --- | --- |
+| 中位提升 | **+5.5%**（噪声级别） |
+| 最大值 | +23.6%（**单轮假阳性**，三轮后变成 −0.1% / −7.8% / +9.7%） |
+| 参数是否到达线上 | 是（`paramSent: true`，无 400/422） |
+| 结论 | 参数被接受，**没有可复现的服务端加速** |
+
+这就是为什么插件要"先测再开关"。完整方法、原始数字与复现命令见 [docs/BENCHMARKS.md](./docs/BENCHMARKS.md)。
 
 ---
 
