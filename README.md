@@ -110,12 +110,37 @@ dsh-turbo-mode 只做两件事：
 
 DSH 插件以 **bundle** 形式安装，需要 DSH ≥ 0.2.2。
 
-1. 把本仓库目录放到任意位置（例如 `~/plugins/dsh-turbo-mode`）。
-2. 在 DSH 的**插件面板**里安装该目录；host 侧对应动作是 `plugin_manager` 的 `install_bundle`（target = 该目录的绝对路径）。
-   > 注意：包名是 **`dsh-turbo-mode`**。npm 上已有同名 `dsh-turbo`（另一个作者的项目），不要混装。
-3. 装好后无需重启，输入框下方即出现 Turbo 开关（若未出现，在插件页把该 bundle 关掉再打开一次即可热重载）。
+**方式一：直接从 GitHub 装（推荐，不需要 npm 账号）**
 
-本机已验证的安装返回值：`application: "applied"`，`warnings: []`。
+在插件面板的安装框里填：
+
+```
+github:iambubu0523/dsh-turbo
+```
+
+host 侧对应 `plugin_manager` 的 `install_bundle`（target = 上面这串 spec），插件管理器会用 pnpm 从 GitHub 直接拉包。
+本机实测：`+ dsh-turbo-mode 0.1.0`，5.6 秒装完，零依赖。
+
+想锁定版本就把 tag 带上：
+
+```
+github:iambubu0523/dsh-turbo#v0.1.0
+```
+
+**方式二：本地目录**
+
+`git clone` 或下载 Release 压缩包解压到任意位置（例如 `~/plugins/dsh-turbo`），
+然后在插件面板里填该目录的**绝对路径**（如 `C:\Users\you\plugins\dsh-turbo`）。
+
+**方式三：npm（待发布）**
+
+包名 `dsh-turbo-mode`，发布后在面板里填这个名字即可。当前 npm 上还没有。
+
+> 注意：本项目的包名是 **`dsh-turbo-mode`**。npm 上已有的 `dsh-turbo` 是另一个作者的项目，不要混装。
+
+装好后**无需重启**，输入框下方即出现 Turbo 开关（若未出现，在插件页把该 bundle 关掉再打开一次即可热重载）。
+
+本机已验证的安装返回值：`application: "applied"`，`warnings: []`（GitHub spec 与本地目录两种方式都实测过）。
 
 ### 卸载
 

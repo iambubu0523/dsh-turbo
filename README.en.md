@@ -107,12 +107,38 @@ That is precisely why the plugin probes before it switches. Full method, raw num
 
 DSH plugins install as a **bundle**; requires DSH ≥ 0.2.2.
 
-1. Put this directory anywhere (e.g. `~/plugins/dsh-turbo-mode`).
-2. Install that directory from the DSH **Plugins** panel; on the host side this is `plugin_manager`'s `install_bundle` with the directory's absolute path as target.
-   > The package name is **`dsh-turbo-mode`**. An unrelated `dsh-turbo` package already exists on npm — do not mix them up.
-3. No restart needed: the Turbo switch shows up under the composer. If it does not, toggle the bundle off and on in the Plugins panel to hot-reload.
+**Option 1 — straight from GitHub (recommended, no npm account needed)**
 
-Verified result on the author's machine: `application: "applied"`, `warnings: []`.
+Type this into the Plugins panel install box:
+
+```
+github:iambubu0523/dsh-turbo
+```
+
+On the host side this is `plugin_manager`'s `install_bundle` with that spec as the target; the manager has pnpm
+clone the package from GitHub. Measured on the author's machine: `+ dsh-turbo-mode 0.1.0`, 5.6 s, zero dependencies.
+
+Pin a release if you prefer:
+
+```
+github:iambubu0523/dsh-turbo#v0.1.0
+```
+
+**Option 2 — a local directory**
+
+`git clone` the repo (or unpack a Release archive) anywhere, then install that folder by its **absolute path**
+(e.g. `C:\Users\you\plugins\dsh-turbo`).
+
+**Option 3 — npm (not published yet)**
+
+The package name is `dsh-turbo-mode`; once published, that name alone works in the panel.
+
+> Note: this project is **`dsh-turbo-mode`**. The `dsh-turbo` package on npm belongs to someone else — do not mix them up.
+
+No restart needed: the Turbo switch appears under the composer. If it does not, toggle the bundle off and on
+in the Plugins panel to hot-reload.
+
+Verified on the author's machine for both the GitHub spec and the local-directory route: `application: "applied"`, `warnings: []`.
 
 ### Uninstall
 
