@@ -231,6 +231,8 @@ node --test "test/**/*.test.js"     # 46 个用例
 
 <p><img src="docs/assets/mascot.png" alt="鲸鱼娘" width="132" /></p>
 
+仓库/组织图标用的是同一角色的方形特写：`docs/assets/avatar.png`。
+
 角色形象「鲸鱼娘」由社区共创，本项目的头像与头图按 [deepseek-whale-girl](https://github.com/TreapGoGo/deepseek-whale-girl) 社区的公开设定描述生成；该社群的提示词文本按 CC BY-SA 4.0 共享，此处仅作参考致谢，不复制其图片素材。
 
 - [dsh-relay-fast](https://github.com/Rock-ql/dsh-relay-fast) —— 早期 `service_tier` 注入思路

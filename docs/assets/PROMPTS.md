@@ -106,12 +106,14 @@ sticker outline, transparent background. NO TEXT.
 
 ## 八、拿到图之后
 
-1. 覆盖到 `docs/assets/`：
-   - `hero.png`（头图，2048×972）
-   - `mascot.png`（透明底，1024×1024）
-   - `social.png`（1280×640）
-2. 告诉我，我会重新提交并推送（`git add docs/assets && git commit && git push`）。
-3. 文字由后期叠加，不要在生成图里写字 —— 中文几乎一定糊。
+1. 覆盖到对应位置（文件名不要改，README 用的是固定路径）：
+   - `docs/assets/hero.jpg` —— 头图，无字，左侧留白 45%
+   - `docs/assets/social.jpg` —— 社交预览，1280×640
+   - `docs/assets/mascot.png` —— 透明底头像，1024×1024
+   - `docs/assets/avatar.png` —— 仓库方形头像，512×512，头部特写
+   - `icon.png` —— 插件面板图标，256×256，圆角深色底
+2. 告诉我，我负责重新叠字、压体积并提交推送（`git add -A && git commit && git push`）。
+3. 文字由代码叠加，不要在生成图里写字 —— 中文几乎一定糊。
 
 ## 授权提醒
 

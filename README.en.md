@@ -227,6 +227,8 @@ Covers capability precedence, state persistence and corrupt-state recovery, metr
 
 <p><img src="docs/assets/mascot.png" alt="whale girl" width="132" /></p>
 
+The repo/org avatar is the square close-up at `docs/assets/avatar.png`.
+
 The whale-girl look is a community creation. This project's avatar and banner were generated from the public character description shared by the [deepseek-whale-girl](https://github.com/TreapGoGo/deepseek-whale-girl) community (their prompt text is licensed CC BY-SA 4.0). No image asset from that repository is copied here.
 
 - [dsh-relay-fast](https://github.com/Rock-ql/dsh-relay-fast) — the original `service_tier` injection approach
