@@ -3,7 +3,6 @@
   "version": "0.1.0",
   "description": "Server-side fast mode for DeepSeek Harness: requests an upstream priority service tier where the provider supports one, measures whether it really is faster, and never lowers reasoning effort or output length.",
   "type": "module",
-  "private": true,
   "exports": {
     ".": "./index.js",
     "./client": "./client.js",
@@ -58,5 +57,17 @@
   ],
   "scripts": {
     "test": "node --test \"test/**/*.test.js\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/iambubu0523/dsh-turbo.git"
+  },
+  "homepage": "https://github.com/iambubu0523/dsh-turbo#readme",
+  "bugs": {
+    "url": "https://github.com/iambubu0523/dsh-turbo/issues"
+  },
+  "author": "dsh-turbo-mode contributors",
+  "publishConfig": {
+    "access": "public"
   }
 }
