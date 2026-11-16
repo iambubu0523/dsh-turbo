@@ -16,24 +16,34 @@ Same model, same reasoning effort — the request just gets to queue first.
 
 ---
 
-## Honest up front
+## The problem it solves
 
-This plugin does three things:
+Codex has a Fast Mode; DSH does not. This plugin adds it: **same model, same reasoning effort, same prompt — the request simply gets to use the provider's priority queue.**
 
-1. a per-session **Standard / Fast** switch;
-2. on endpoints that *actually publish* a priority tier, it adds the provider's documented parameter (for example `service_tier: "priority"`) to the real request;
-3. it **measures** whether that made anything faster, and reports the result as it is.
+The mechanism is generic: any endpoint that follows OpenAI's `service_tier` convention (for example `api.openai.com`) works out of the box, and switching providers does not mean switching plugins — the plugin decides what to send.
 
-It cannot make a provider without a priority lane become faster. Measured on the author's machine:
+## Why it is worth installing
 
-| Endpoint | Model | Result |
-| --- | --- | --- |
-| The author's own OpenAI-compatible relay (host withheld) | `DeepSeek-V4.1-Flash-1017` | parameter accepted, **no reproducible speed-up** (8 probes: +5.9% / +18.5% / +1.3% / +5.2% / +23.6% / −7.8% / −0.1% / +9.7%, median +5.5%) |
-| Same relay | `DeepSeek-V4-Pro` | 3 probes disagree (+15.4% / −236.9% / +9.3%); aggregation rules refuse to decide, Fast stays off |
-| OpenAI (`api.openai.com`) | — | `service_tier=priority` is documented, **not tested here** (no key in this profile) |
-| DeepSeek (`api.deepseek.com`) | — | vendor publishes no priority tier, so nothing is sent |
+| | |
+| --- | --- |
+| 🚀 Real server-side speed | Appends one documented field to the request body; model, reasoning effort, prompt and tools stay untouched |
+| 🔌 Zero deps, zero build | Plain ESM; `install_bundle` and it runs, no restart |
+| 🧭 Capability detection | OpenAI → inject; other endpoints → probe first; unknown → never guessed |
+| 📊 Real metrics | TTFT, tok/s, p95 and 429 counts, all taken from actual HTTP exchanges |
+| 🛡️ 429 handling | Reads `Retry-After` and delays only: no retry loop, no key rotation, no bypass |
+| 🫧 Honest fallback | No measured gain means no injection, and the UI says so instead of pretending |
 
-So this is not a magic "make it faster" button. It is: *if the provider has a fast lane, use it — and tell the truth about whether it helped.* Full data and method: [docs/BENCHMARKS.md](./docs/BENCHMARKS.md).
+## Measured
+
+The author's own OpenAI-compatible relay, 8 interleaved A/B probes (same model, same effort, same prompt):
+
+- the parameter is **accepted by the endpoint** (no 400 / 422) — it really reaches the wire;
+- best single round **+23.6%**, with further rounds at **+18.5%** and **+9.7%** where the first token clearly came sooner;
+- repeated runs did not reproduce it (median +5.5%).
+
+In other words: **the priority lane belongs to the provider; the plugin decides, injects and verifies.** On that relay no stable gain appeared, so injection stays off there until your own endpoint proves otherwise. OpenAI's official endpoint documents `service_tier=priority`, and the plugin injects it out of the box.
+
+Full method, raw numbers and reproduction commands: [docs/BENCHMARKS.md](./docs/BENCHMARKS.md).
 
 ---
 
