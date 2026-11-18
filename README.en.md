@@ -10,7 +10,7 @@ Same model, same reasoning effort — the request just gets to queue first.
 [![deps](https://img.shields.io/badge/runtime%20deps-0-56E1E9?style=flat-square)](./package.json)
 [![tests](https://img.shields.io/badge/tests-46%20passing-4ADE80?style=flat-square)](./test)
 
-[中文](./README.md) · [Measured results](./docs/BENCHMARKS.md) · [Design notes](./docs/DETAIL.md)
+[中文](./README.md) · [Measured results](./docs/BENCHMARKS.md) · [Design notes](./docs/DETAIL.md) · [Juejin article (zh)](https://juejin.cn/post/7709167124325171238)
 
 </div>
 

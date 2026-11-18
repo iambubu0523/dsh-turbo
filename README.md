@@ -10,7 +10,7 @@
 [![deps](https://img.shields.io/badge/runtime%20deps-0-56E1E9?style=flat-square)](./package.json)
 [![tests](https://img.shields.io/badge/tests-46%20passing-4ADE80?style=flat-square)](./test)
 
-[English](./README.en.md) · [实测报告](./docs/BENCHMARKS.md) · [设计细节](./docs/DETAIL.md)
+[English](./README.en.md) · [实测报告](./docs/BENCHMARKS.md) · [设计细节](./docs/DETAIL.md) · [掘金文章](https://juejin.cn/post/7709167124325171238)
 
 </div>
 
