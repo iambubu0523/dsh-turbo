@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Read the benchmark numbers first
+    url: https://github.com/iambubu0523/dsh-turbo/blob/master/docs/BENCHMARKS.md
+    about: Eight probes, median +5.5%, best round +23.6% never reproduced. The method section explains why one round never decides a verdict.
+  - name: What the plugin does and does not do
+    url: https://github.com/iambubu0523/dsh-turbo/blob/master/docs/DETAIL.md
+    about: The endpoint table, the verdict rules and where your settings are stored.

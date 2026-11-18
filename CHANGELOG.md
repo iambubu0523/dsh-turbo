@@ -3,6 +3,14 @@
 All notable changes to **dsh-turbo-mode** are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/), versioning follows [SemVer](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- `docs/announcements/` — ready-to-post drafts (V2EX, 掘金, Reddit/HN, X) written around the measured numbers instead of a speed claim.
+- GitHub issue templates: a bug report that asks for `GET /turbo/state`, and a **Fast lane works on my endpoint** report that asks for a 3-round probe result — the dataset this project is missing.
+- README **Feedback** section: what makes a useful report, and why a single round is not accepted as evidence.
+
 ## [0.1.0] — 2026-11-16
 
 First release. Package name is `dsh-turbo-mode` (the npm name `dsh-turbo` belongs to an unrelated project).

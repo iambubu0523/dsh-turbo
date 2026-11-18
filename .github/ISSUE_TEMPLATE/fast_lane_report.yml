@@ -1,0 +1,64 @@
+name: Fast lane works on my endpoint
+description: Tell me a provider/model where a priority service tier measurably helps, with the numbers.
+labels: [verdict-data]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This project needs one thing more than code: **real A/B numbers from endpoints other than mine.**
+        Mine says `accepted-no-effect` (parameter accepted, server ignored it) — that is a single data point
+        from a single relay, and it is not enough to say anything about anyone else's.
+
+        A useful report is a probe result, not an opinion. Two rules:
+
+        - **Never paste an API key or a private endpoint URL.**
+        - A verdict needs at least 3 interleaved rounds. One round that happened to be faster is how this
+          project's own first false positive happened (+23.6%, never reproduced).
+
+  - type: input
+    id: provider-host
+    attributes:
+      label: Provider and endpoint host
+      placeholder: openai -> api.openai.com
+    validations:
+      required: true
+
+  - type: input
+    id: model
+    attributes:
+      label: Model id
+      placeholder: gpt-5-codex
+    validations:
+      required: true
+
+  - type: dropdown
+    id: documented
+    attributes:
+      label: Does the provider document a priority tier?
+      options:
+        - "Yes — linked in the description below"
+        - "No, I just tried it"
+        - "Not sure"
+    validations:
+      required: true
+
+  - type: textarea
+    id: probe
+    attributes:
+      label: Probe output (at least 3 rounds)
+      description: |
+        ```
+        POST /turbo/probe  {"samples": 3}
+        ```
+        Paste the whole JSON — `verdict`, `standardMedianMs`, `fastMedianMs`, `deltaPct` and `rounds` all matter.
+      render: json
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything unusual about the link
+      description: Local proxy, VPN, region, rate limits, whether `paramSent` was true.
+    validations:
+      required: false

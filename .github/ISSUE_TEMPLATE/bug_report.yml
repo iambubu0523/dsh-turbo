@@ -1,0 +1,96 @@
+name: Bug report
+description: Something behaved differently from what the README says it should.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Two things before you start:
+
+        - **Never paste an API key, token, cookie or a private endpoint URL.** Replace the host with
+          `relay.example.com` if you need to show a URL shape.
+        - The single most useful thing you can paste is the output of `GET /turbo/state` — it carries the
+          capability verdict, the transport counters and the metrics, which usually answers the question
+          before I ask it.
+
+  - type: input
+    id: dsh-version
+    attributes:
+      label: DSH version
+      description: Output of `dsh --version`.
+      placeholder: 0.2.2-rc.3
+    validations:
+      required: true
+
+  - type: input
+    id: node-version
+    attributes:
+      label: Node version
+      placeholder: v24.21.0
+    validations:
+      required: true
+
+  - type: input
+    id: provider
+    attributes:
+      label: Provider and endpoint host
+      description: The provider id from your profile and the host it talks to (not the full URL, not the key).
+      placeholder: soph -> www.example.com
+    validations:
+      required: true
+
+  - type: input
+    id: model
+    attributes:
+      label: Model id
+      placeholder: DeepSeek-V4.1-Flash-1017
+    validations:
+      required: true
+
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Which speed was selected
+      options:
+        - Standard
+        - Fast
+        - Not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: state
+    attributes:
+      label: Output of GET /turbo/state
+      description: |
+        Run it against the DSH web port, with your session id if you have it:
+
+        ```
+        curl http://127.0.0.1:<port>/turbo/state?sessionId=<id>
+        ```
+
+        Redact nothing except credentials — the host and model are what make the report actionable.
+      render: json
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected, and what happened instead
+    validations:
+      required: true
+
+  - type: textarea
+    id: probe
+    attributes:
+      label: Probe output (optional)
+      description: |
+        If the issue is about the Fast verdict, paste the result of a probe with at least 3 rounds:
+
+        ```
+        POST /turbo/probe  {"samples": 3}
+        ```
+      render: json
+    validations:
+      required: false

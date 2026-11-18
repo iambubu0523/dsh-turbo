@@ -249,6 +249,26 @@ Covers capability precedence, state persistence and corrupt-state recovery, metr
 - First-token latency is noisy on a shared network, so the probe's 15% threshold is deliberately conservative — which is why every measurement is stored in `capability.json` instead of being claimed in prose.
 - If a relay "accepts but ignores" the tier parameter, this plugin reports it as **no effect**, not as a win.
 
+## Feedback, and the data this project still needs
+
+Right now this repository holds exactly **one** probe result, and it is a `accepted-no-effect` from my own
+relay — the parameter was accepted and the server ignored it. That says nothing about your endpoint.
+
+So the useful feedback is **numbers**, not opinions:
+
+- **Fast genuinely works on your endpoint** → open an issue with the "Fast lane works on my endpoint"
+  template and paste the full `POST /turbo/probe {"samples":3}` output (`verdict`, both medians,
+  `deltaPct`, `rounds`).
+- **Something behaved wrongly** → use the Bug template and paste `GET /turbo/state` (strip keys and
+  private hostnames first).
+- **Just want to say it installed / did not** → open a plain issue, no template needed.
+
+One hard rule: **a single round is not a measurement.** This project's own first false positive was a
+single round at +23.6%; three reruns gave −7.8%, −0.1% and +9.7%. If a report has one round in it, I will
+ask for two more.
+
+---
+
 ## Credits
 
 <p><img src="docs/assets/mascot.png" alt="whale girl" width="132" /></p>
